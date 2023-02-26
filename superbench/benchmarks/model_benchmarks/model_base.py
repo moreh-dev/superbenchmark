@@ -411,6 +411,8 @@ class ModelBenchmark(Benchmark):
         # The unit of step time is millisecond, use it to calculate the throughput with the unit samples/sec.
         millisecond_per_second = 1000
         throughput = [millisecond_per_second / step_time * self._args.batch_size for step_time in step_times]
+        mean_throughput = millisecond_per_second / statistics.mean(step_times) * self._args.batch_size
+
         self._result.add_raw_data(metric_s, step_times, self._args.log_raw_data)
         self._result.add_raw_data(metric_t, throughput, self._args.log_raw_data)
 
@@ -420,11 +422,10 @@ class ModelBenchmark(Benchmark):
                 return None
             if self._local_rank is None or self._global_rank == 0:
                 self._result.add_result(metric_s, statistics.mean(step_times))
-                throughput = [millisecond_per_second / step_time * self._args.batch_size for step_time in step_times]
-                self._result.add_result(metric_t, statistics.mean(throughput))
+                self._result.add_result(metric_t, mean_throughput)
         elif model_action == ModelAction.INFERENCE:
             self._result.add_result(metric_s, statistics.mean(step_times))
-            self._result.add_result(metric_t, statistics.mean(throughput))
+            self._result.add_result(metric_t, mean_throughput)
             self._process_percentile_result(metric_s, step_times)
             self._process_percentile_result(metric_t, throughput)
 

@@ -4,6 +4,9 @@
 """Module of the Pytorch BERT model."""
 
 import torch
+
+torch.moreh.options.allow_relaxed_fp32=True
+
 from transformers import BertModel, BertConfig
 try:
     import transformer_engine.pytorch as te
@@ -235,6 +238,10 @@ class PytorchBERT(PytorchBase):
                 loss = self._loss_fn(output, self._target)
                 loss.backward()
                 self._optimizer.step()
+
+                if curr_step + 1 == self._args.num_warmup + self._args.num_steps:
+                    loss.item()
+
                 end = self._timer()
                 curr_step += 1
                 if curr_step > self._args.num_warmup:
@@ -265,9 +272,13 @@ class PytorchBERT(PytorchBase):
                         sample = sample.cuda()
                     if self._fp8_recipe is not None:
                         with te.fp8_autocast(enabled=True, fp8_recipe=self._fp8_recipe):
-                            self._model(sample)
+                            output = self._model(sample)
                     else:
-                        self._model(sample)
+                        output = self._model(sample)
+
+                    if curr_step + 1 == self._args.num_warmup + self._args.num_steps:
+                        output.item()
+
                     end = self._timer()
                     curr_step += 1
                     if curr_step > self._args.num_warmup:

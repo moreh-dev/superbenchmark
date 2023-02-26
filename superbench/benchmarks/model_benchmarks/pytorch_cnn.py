@@ -6,6 +6,8 @@
 import torch
 from torchvision import models
 
+torch.moreh.options.miopen_mode=3
+
 from superbench.common.utils import logger
 from superbench.benchmarks import BenchmarkRegistry, Precision
 from superbench.benchmarks.model_benchmarks.model_base import Optimizer
@@ -109,6 +111,10 @@ class PytorchCNN(PytorchBase):
                 loss = self._loss_fn(output, self._target)
                 loss.backward()
                 self._optimizer.step()
+
+                if curr_step + 1 == self._args.num_warmup + self._args.num_steps:
+                    loss.item()
+
                 end = self._timer()
                 curr_step += 1
                 if curr_step > self._args.num_warmup:
@@ -138,7 +144,11 @@ class PytorchCNN(PytorchBase):
                     start = self._timer()
                     if self._gpu_available:
                         sample = sample.cuda()
-                    self._model(sample)
+                    output = self._model(sample)
+
+                    if curr_step + 1 == self._args.num_warmup + self._args.num_steps:
+                        output.item()
+
                     end = self._timer()
                     curr_step += 1
                     if curr_step > self._args.num_warmup:

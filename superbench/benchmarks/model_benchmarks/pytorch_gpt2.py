@@ -4,6 +4,9 @@
 """Module of the Pytorch GPT2 model."""
 
 import torch
+
+torch.moreh.options.allow_relaxed_fp32=True
+
 from transformers import GPT2Model, GPT2Config
 
 from superbench.common.utils import logger
@@ -140,6 +143,10 @@ class PytorchGPT2(PytorchBase):
                 loss = self._loss_fn(output[range(self._args.batch_size), -1], self._target)
                 loss.backward()
                 self._optimizer.step()
+
+                if curr_step + 1 == self._args.num_warmup + self._args.num_steps:
+                    output.item()
+
                 end = self._timer()
                 curr_step += 1
                 if curr_step > self._args.num_warmup:
@@ -168,7 +175,11 @@ class PytorchGPT2(PytorchBase):
                     start = self._timer()
                     if self._gpu_available:
                         sample = sample.cuda()
-                    self._model(sample)
+                    output = self._model(sample)
+
+                    if curr_step + 1 == self._args.num_warmup + self._args.num_steps:
+                        output.item()
+
                     end = self._timer()
                     curr_step += 1
                     if curr_step > self._args.num_warmup:
