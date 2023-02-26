@@ -112,7 +112,7 @@ class PytorchCNN(PytorchBase):
                 loss.backward()
                 self._optimizer.step()
 
-                if curr_step + 1 == self._args.num_warmup + self._args.num_steps:
+                if curr_step + 1 == self._args.num_warmup + self._args.num_steps or curr_step + 1 == self._args.num_warmup:
                     loss.item()
 
                 end = self._timer()
@@ -146,7 +146,7 @@ class PytorchCNN(PytorchBase):
                         sample = sample.cuda()
                     output = self._model(sample)
 
-                    if curr_step + 1 == self._args.num_warmup + self._args.num_steps:
+                    if curr_step + 1 == self._args.num_warmup + self._args.num_steps or curr_step + 1 == self._args.num_warmup:
                         output.item()
 
                     end = self._timer()

@@ -144,7 +144,7 @@ class PytorchGPT2(PytorchBase):
                 loss.backward()
                 self._optimizer.step()
 
-                if curr_step + 1 == self._args.num_warmup + self._args.num_steps:
+                if curr_step + 1 == self._args.num_warmup + self._args.num_steps or curr_step + 1 == self._args.num_warmup:
                     output.item()
 
                 end = self._timer()
@@ -177,12 +177,13 @@ class PytorchGPT2(PytorchBase):
                         sample = sample.cuda()
                     output = self._model(sample)
 
-                    if curr_step + 1 == self._args.num_warmup + self._args.num_steps:
+                    if curr_step + 1 == self._args.num_warmup + self._args.num_steps or curr_step + 1 == self._args.num_warmup:
                         output.item()
 
                     end = self._timer()
                     curr_step += 1
                     if curr_step > self._args.num_warmup:
+
                         # Save the step time of every training/inference step, unit is millisecond.
                         duration.append((end - start) * 1000)
                         self._log_step_time(curr_step, precision, duration)
