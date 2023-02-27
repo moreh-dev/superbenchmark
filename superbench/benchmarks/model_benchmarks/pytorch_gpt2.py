@@ -133,28 +133,33 @@ class PytorchGPT2(PytorchBase):
         duration = []
         curr_step = 0
         check_frequency = 100
+
+        for sample in self._dataloader:
+            synthetic_sample = sample.to(dtype=getattr(torch, precision.value))
+            break
+
         while True:
-            for idx, sample in enumerate(self._dataloader):
-                start = self._timer()
-                if self._gpu_available:
-                    sample = sample.cuda()
-                self._optimizer.zero_grad()
-                output = self._model(sample)
-                loss = self._loss_fn(output[range(self._args.batch_size), -1], self._target)
-                loss.backward()
-                self._optimizer.step()
+            sample = synthetic_sample
+            start = self._timer()
+            if self._gpu_available:
+                sample = sample.cuda()
+            self._optimizer.zero_grad()
+            output = self._model(sample)
+            loss = self._loss_fn(output[range(self._args.batch_size), -1], self._target)
+            loss.backward()
+            self._optimizer.step()
 
-                if curr_step + 1 == self._args.num_warmup + self._args.num_steps or curr_step + 1 == self._args.num_warmup:
-                    loss.item()
+            if curr_step + 1 == self._args.num_warmup + self._args.num_steps or curr_step + 1 == self._args.num_warmup:
+                loss.item()
 
-                end = self._timer()
-                curr_step += 1
-                if curr_step > self._args.num_warmup:
+            end = self._timer()
+            curr_step += 1
+            if curr_step > self._args.num_warmup:
                     # Save the step time of every training/inference step, unit is millisecond.
-                    duration.append((end - start) * 1000)
-                    self._log_step_time(curr_step, precision, duration)
-                if self._is_finished(curr_step, end, check_frequency):
-                    return duration
+                duration.append((end - start) * 1000)
+                self._log_step_time(curr_step, precision, duration)
+            if self._is_finished(curr_step, end, check_frequency):
+                return duration
 
     def _inference_step(self, precision):
         """Define the inference process.
@@ -170,26 +175,31 @@ class PytorchGPT2(PytorchBase):
         curr_step = 0
         with torch.no_grad():
             self._model.eval()
+
+            for sample in self._dataloader:
+                synthetic_sample = sample.to(dtype=getattr(torch, precision.value))
+                break
+
             while True:
-                for idx, sample in enumerate(self._dataloader):
-                    start = self._timer()
-                    if self._gpu_available:
-                        sample = sample.cuda()
-                    output = self._model(sample)
-                    torch.moreh.flush()
+                sample = synthetic_sample
+                start = self._timer()
+                if self._gpu_available:
+                    sample = sample.cuda()
+                output = self._model(sample)
+                torch.moreh.flush()
 
-                    if curr_step + 1 == self._args.num_warmup + self._args.num_steps or curr_step + 1 == self._args.num_warmup:
-                        output.cpu()
+                if curr_step + 1 == self._args.num_warmup + self._args.num_steps or curr_step + 1 == self._args.num_warmup:
+                    output.cpu()
 
-                    end = self._timer()
-                    curr_step += 1
-                    if curr_step > self._args.num_warmup:
+                end = self._timer()
+                curr_step += 1
+                if curr_step > self._args.num_warmup:
 
-                        # Save the step time of every training/inference step, unit is millisecond.
-                        duration.append((end - start) * 1000)
-                        self._log_step_time(curr_step, precision, duration)
-                    if self._is_finished(curr_step, end):
-                        return duration
+                    # Save the step time of every training/inference step, unit is millisecond.
+                    duration.append((end - start) * 1000)
+                    self._log_step_time(curr_step, precision, duration)
+                if self._is_finished(curr_step, end):
+                    return duration
 
 
 # Register GPT2 benchmark with 117M parameters.
