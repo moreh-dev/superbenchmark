@@ -178,7 +178,7 @@ class PytorchGPT2(PytorchBase):
                     output = self._model(sample)
 
                     if curr_step + 1 == self._args.num_warmup + self._args.num_steps or curr_step + 1 == self._args.num_warmup:
-                        output.item()
+                        output.cpu()
 
                     end = self._timer()
                     curr_step += 1
