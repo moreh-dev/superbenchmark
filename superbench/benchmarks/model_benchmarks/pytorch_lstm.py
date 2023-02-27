@@ -186,6 +186,7 @@ class PytorchLSTM(PytorchBase):
                         sample = sample.cuda()
                     output = self._model(sample)
 
+                    torch.moreh.flush()
                     if curr_step + 1 == self._args.num_warmup + self._args.num_steps or curr_step + 1 == self._args.num_warmup:
                         output.cpu()
 
