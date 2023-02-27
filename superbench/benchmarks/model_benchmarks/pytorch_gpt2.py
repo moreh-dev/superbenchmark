@@ -143,7 +143,7 @@ class PytorchGPT2(PytorchBase):
             start = self._timer()
             if self._gpu_available:
                 sample = sample.cuda()
-            self._optimizer.zero_grad()
+            self._optimizer.zero_grad(set_to_none=True)
             output = self._model(sample)
             loss = self._loss_fn(output[range(self._args.batch_size), -1], self._target)
             loss.backward()
