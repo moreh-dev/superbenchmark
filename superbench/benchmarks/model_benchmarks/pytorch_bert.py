@@ -226,7 +226,7 @@ class PytorchBERT(PytorchBase):
         check_frequency = 100
 
         for sample in self._dataloader:
-            synthetic_sample = sample.to(dtype=getattr(torch, precision.value))
+            synthetic_sample = sample
             break
 
         while True:
@@ -272,7 +272,7 @@ class PytorchBERT(PytorchBase):
             self._model.eval()
 
             for sample in self._dataloader:
-                synthetic_sample = sample.to(dtype=getattr(torch, precision.value))
+                synthetic_sample = sample
                 break
 
             while True:
